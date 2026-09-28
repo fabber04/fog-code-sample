@@ -1,0 +1,25 @@
+# Local PostgreSQL for FOG backend (matches production SQL dialect).
+# From repo root: docker compose up -d
+# Host port 5433 avoids clashing with another Postgres already on 5432 (Docker Desktop, local install).
+# DATABASE_URL: postgresql://fog:fog@127.0.0.1:5433/fog_platform
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fog-postgres-local
+    environment:
+      POSTGRES_USER: fog
+      POSTGRES_PASSWORD: fog
+      POSTGRES_DB: fog_platform
+    ports:
+      - "5433:5432"
+    volumes:
+      - fog_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fog -d fog_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  fog_pg_data:

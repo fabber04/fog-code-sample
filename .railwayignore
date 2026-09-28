@@ -1,0 +1,24 @@
+# Files to ignore when deploying to Railway
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+.venv
+*.db
+*.sqlite
+*.sqlite3
+fog_platform.db
+*.log
+.DS_Store
+.git/
+.gitignore
+README.md
+*.md
+.env
+.env.local
+*.backup
+

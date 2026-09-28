@@ -1,0 +1,15 @@
+# Frontend service (repo root). Backend uses backend/ as Railway root directory.
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = [
+  "REACT_APP_BUILD_SHA=${RAILWAY_GIT_COMMIT_SHA:-local} npm run build:railway",
+  "test -f build/index.html || (echo 'Build failed: build/index.html missing' && exit 1)",
+]
+
+[start]
+cmd = "npx serve -s build -l ${PORT:-3000}"

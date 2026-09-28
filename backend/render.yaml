@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: fog-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: STORAGE_MODE
+        value: local
+      # Add these in Render Dashboard after creating database:
+      # - key: DATABASE_URL
+      #   fromDatabase:
+      #     name: fog-database
+      #     property: connectionString
+      # - key: SECRET_KEY
+      #   generateValue: true
+      # - key: CORS_ORIGINS
+      #   value: https://familyofgreatness.com,https://www.familyofgreatness.com,https://fabber04.github.io,http://localhost:3000
+
+databases:
+  - name: fog-database
+    plan: free
+    databaseName: fog_platform
+    user: fog_user
+
+

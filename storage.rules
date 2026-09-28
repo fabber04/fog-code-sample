@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Public read access for podcasts and images
+    match /podcasts/{allPaths=**} {
+      allow read: if true;  // Anyone can read podcasts
+      allow write: if request.auth != null;  // Only authenticated users can write
+    }
+    
+    match /images/{allPaths=**} {
+      allow read: if true;  // Anyone can read images
+      allow write: if request.auth != null;  // Only authenticated users can write
+    }
+    
+    // More specific rules for different file types
+    match /podcasts/audio/{audioFile} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /podcasts/covers/{coverFile} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /events/{eventFile} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /courses/{courseFile} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /library/{libraryFile} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Default: deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

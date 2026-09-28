@@ -1,0 +1,71 @@
+name: "CodeQL Security Scanning"
+
+# Runs alongside ci.yml (which handles tests and builds).
+# This workflow is specifically for static security analysis — it scans for
+# vulnerabilities in both the React/JS frontend and the FastAPI/Python backend.
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  schedule:
+    # Weekly scan every Saturday at 05:42 UTC — catches newly-disclosed
+    # vulnerabilities in code that hasn't changed recently.
+    - cron: "42 5 * * 6"
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write  # Required: publish results to the Security tab
+      packages: read          # Required: fetch CodeQL packs
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Covers src/ (React, Tailwind, Firebase client SDK calls)
+          - language: javascript-typescript
+            build-mode: none
+
+          # Covers backend/ (FastAPI routes, SQLAlchemy, auth utils)
+          - language: python
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install Python deps so CodeQL can resolve imports across the backend.
+      # Without this, it can't follow calls into sqlalchemy, jose, passlib etc.
+      # and will miss cross-library taint flows (e.g. unsanitised input reaching
+      # a DB query via a helper function).
+      - name: Set up Python (backend analysis)
+        if: matrix.language == 'python'
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies (backend analysis)
+        if: matrix.language == 'python'
+        run: pip install -r backend/requirements.lock.txt
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          # security-extended adds extra queries beyond the default set:
+          # - More SQL injection patterns (important given raw text() calls in admin routes)
+          # - Path traversal (important given local file upload storage in storage/)
+          # - Sensitive data exposure (covers prayer request / member data leakage)
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
